@@ -35,7 +35,9 @@ def main():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
+            flow = InstalledAppFlow.from_client_secrets_file(
+                "/Users/soso/python-projects/time-manage/credentials.json", SCOPES
+            )
             creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
         with open("token.json", "w") as token:
@@ -100,7 +102,7 @@ def commitHours(creds, part):
             print(f"{event['summary']}, duration: {duration}")
         print(f"Total gym time: {total_duration}")
 
-        conn = sqlite3.connect("hours.sqlite3")
+        conn = sqlite3.connect("/Users/soso/python-projects/time-manage/hours.sqlite3")
         cur = conn.cursor()
         print("Opened database successfully")
         date = datetime.date.today()
