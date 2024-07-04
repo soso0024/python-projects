@@ -44,13 +44,31 @@ def main():
             token.write(creds.to_json())
 
     # determine which function to run
+    if len(sys.argv) <= 1:
+        print("Bad Request\nYou should provide a arguments like 'add' or 'commit'")
+        exit()
+
     if sys.argv[1] == "add":
+        if len(sys.argv) <= 3:
+            print("You should provide duration and a title of plan")
+            exit()
         duration = sys.argv[2]
-        description = sys.argv[3]
-        addEvent(creds, duration, description)
+        title = sys.argv[3]
+        addEvent(creds, duration, title)
+
     if sys.argv[1] == "commit":
+        if len(sys.argv) <= 2:
+            print("You should provide the muscle part where you did training")
+            exit()
         part = sys.argv[2]
         commitHours(creds, part)
+
+    if sys.argv[1] == "get":
+        if len(sys.argv) <= 2:
+            print("You should provide duration of date")
+            exit()
+        duration = sys.argv[2]
+        getHours(duration)
 
 
 def commitHours(creds, part):
@@ -146,7 +164,23 @@ def addEvent(creds, duration, description):
         )
         .execute()
     )
-    print("Event created: %s" % (event.get("htmlLink")))
+    print("Gym event created: %s" % (event.get("htmlLink")))
+
+
+def getHours(duration):
+    start = datetime.datetime.utcnow()
+    end = datetime.datetime.utcnow() - datetime.timedelta(hours=int(duration))
+
+    try:
+        conn = sqlite3.connect("/Users/soso/python-projects/time-manage/hours.sqlite3")
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM hours")
+        rows = cur.fetchall()
+        for row in rows:
+            print(row)
+
+    except sqlite3.Error as error:
+        print(error)
 
 
 if __name__ == "__main__":
