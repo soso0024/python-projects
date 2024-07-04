@@ -57,12 +57,12 @@ def main():
         addEvent(creds, duration, title)
 
     if sys.argv[1] == "commit":
-        if len(sys.argv) <= 2:
-            print("You should provide a type and a kind")
+        if len(sys.argv) <= 1:
+            print("You should provide day")
             exit()
-        type = sys.argv[2]
+        day = sys.argv[2]
         kind = sys.argv[3]
-        commitHours(creds, type, kind)
+        commitHours(creds, day, kind)
 
     if sys.argv[1] == "get":
         if len(sys.argv) <= 2:
@@ -72,13 +72,15 @@ def main():
         getHours(duration)
 
 
-def commitHours(creds, type, kind):
+def commitHours(creds, day, kind):
     try:
         service = build("calendar", "v3", credentials=creds)
 
         # Call the Calendar API
         today = datetime.date.today()
-        timeStart = str(today) + "T00:00:00Z"
+        month_ago = today - datetime.timedelta(days=int(day))
+
+        timeStart = str(month_ago) + "T00:00:00Z"
         timeEnd = str(today) + "T23:59:59Z"  # 'Z' indicates UTC time
         events_result = (
             service.events()
@@ -94,7 +96,7 @@ def commitHours(creds, type, kind):
         )
         events = events_result.get("items", [])
 
-        print(events)
+        # print(events)
 
         if not events:
             print("No upcoming events found.")
@@ -107,6 +109,7 @@ def commitHours(creds, type, kind):
         )
 
         print("SPORT HOURS:")
+        event_data = []
         for event in events:
             start = event["start"].get("dateTime", event["start"].get("date"))
             end = event["end"].get("dateTime", event["end"].get("date"))
@@ -120,7 +123,28 @@ def commitHours(creds, type, kind):
             duration = end_formatted - start_formatted
 
             total_duration += duration
-            print(f"{event['summary']}, duration: {duration}")
+            print(f"{start}, {event['summary']}, duration: {duration}")
+
+            event_type = "GYM"
+            kind = None
+            if event["summary"].upper() == "GYM":
+                event_type = "GYM"
+            if (
+                event["summary"].upper() == "BASKET"
+                or event["summary"].upper() == "BASKETBALL"
+            ):
+                event_type = "BASKETBALL"
+                kind = "Club"
+
+            event_data.append(
+                (
+                    start_formatted.date(),
+                    event_type,
+                    duration.total_seconds() / 3600,
+                    kind,
+                )
+            )
+
         print(f"Total sport time: {total_duration}")
 
         try:
@@ -129,17 +153,25 @@ def commitHours(creds, type, kind):
             )
             cur = conn.cursor()
             print("Opened database successfully")
-            date = datetime.date.today()
 
-            formatted_total_duration = total_duration.seconds / 60 / 60
+            for sport_data in event_data:
+                date, event_type, formatted_total_duration, kind = sport_data
 
-            sport_hours = (date, type, formatted_total_duration, kind)
-            cur.execute("INSERT INTO sport VALUES(?, ?, ?, ?);", sport_hours)
-            conn.commit()
-            print("Sport Information added to database successfully")
+                cur.execute(
+                    "SELECT * FROM Sport WHERE DATE = ? AND CATEGORY = ?",
+                    (date, event_type),
+                )
+                existing_row = cur.fetchone()
+
+                if existing_row is None:
+                    cur.execute("INSERT INTO Sport VALUES(?, ?, ?, ?);", sport_data)
+                    conn.commit()
+                    print("Sport Information added to database successfully")
+                else:
+                    print("The information already exists in the database.")
 
         except sqlite3.Error as error:
-            print(f"Error Message: {error}\nYou already add the information.")
+            print(f"Error Message: {error}")
 
     except HttpError as error:
         print(f"An error occurred: {error}")
