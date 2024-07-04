@@ -170,12 +170,6 @@ def addEvent(creds, duration, description):
 def getHours(duration):
     start = datetime.datetime.utcnow() - datetime.timedelta(days=int(duration))
     end = datetime.datetime.utcnow()
-    # print(start, end)
-
-    # start_formatted = start.isoformat() + "Z"
-    # end_formatted = end.isoformat() + "Z"
-
-    # print(start_formatted, end_formatted)
 
     try:
         conn = sqlite3.connect("/Users/soso/python-projects/time-manage/hours.sqlite3")
