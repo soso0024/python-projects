@@ -58,10 +58,11 @@ def main():
 
     if sys.argv[1] == "commit":
         if len(sys.argv) <= 2:
-            print("You should provide the muscle part where you did training")
+            print("You should provide a type and a kind")
             exit()
-        part = sys.argv[2]
-        commitHours(creds, part)
+        type = sys.argv[2]
+        kind = sys.argv[3]
+        commitHours(creds, type, kind)
 
     if sys.argv[1] == "get":
         if len(sys.argv) <= 2:
@@ -71,7 +72,7 @@ def main():
         getHours(duration)
 
 
-def commitHours(creds, part):
+def commitHours(creds, type, kind):
     try:
         service = build("calendar", "v3", credentials=creds)
 
@@ -82,7 +83,7 @@ def commitHours(creds, part):
         events_result = (
             service.events()
             .list(
-                calendarId=os.getenv("GYM_ID"),
+                calendarId=os.getenv("SPORT_ID"),
                 timeMin=timeStart,
                 timeMax=timeEnd,
                 singleEvents=True,
@@ -92,6 +93,8 @@ def commitHours(creds, part):
             .execute()
         )
         events = events_result.get("items", [])
+
+        print(events)
 
         if not events:
             print("No upcoming events found.")
@@ -103,7 +106,7 @@ def commitHours(creds, part):
             hours=0,
         )
 
-        print("GYM HOURS:")
+        print("SPORT HOURS:")
         for event in events:
             start = event["start"].get("dateTime", event["start"].get("date"))
             end = event["end"].get("dateTime", event["end"].get("date"))
@@ -118,19 +121,25 @@ def commitHours(creds, part):
 
             total_duration += duration
             print(f"{event['summary']}, duration: {duration}")
-        print(f"Total gym time: {total_duration}")
+        print(f"Total sport time: {total_duration}")
 
-        conn = sqlite3.connect("/Users/soso/python-projects/time-manage/hours.sqlite3")
-        cur = conn.cursor()
-        print("Opened database successfully")
-        date = datetime.date.today()
+        try:
+            conn = sqlite3.connect(
+                "/Users/soso/python-projects/time-manage/sport.sqlite3"
+            )
+            cur = conn.cursor()
+            print("Opened database successfully")
+            date = datetime.date.today()
 
-        formatted_total_duration = total_duration.seconds / 60 / 60
+            formatted_total_duration = total_duration.seconds / 60 / 60
 
-        gym_hours = (date, "GYM", formatted_total_duration, part)
-        cur.execute("INSERT INTO hours VALUES(?, ?, ?, ?);", gym_hours)
-        conn.commit()
-        print("Gym hours added to database successfully")
+            sport_hours = (date, type, formatted_total_duration, kind)
+            cur.execute("INSERT INTO sport VALUES(?, ?, ?, ?);", sport_hours)
+            conn.commit()
+            print("Sport Information added to database successfully")
+
+        except sqlite3.Error as error:
+            print(f"Error Message: {error}\nYou already add the information.")
 
     except HttpError as error:
         print(f"An error occurred: {error}")
@@ -159,28 +168,35 @@ def addEvent(creds, duration, description):
     event = (
         service.events()
         .insert(
-            calendarId=os.getenv("GYM_ID"),
+            calendarId=os.getenv("SPORT_ID"),
             body=event,
         )
         .execute()
     )
-    print("Gym event created: %s" % (event.get("htmlLink")))
+    print("Sport event created: %s" % (event.get("htmlLink")))
 
 
 def getHours(duration):
     start = datetime.datetime.utcnow() - datetime.timedelta(days=int(duration))
     end = datetime.datetime.utcnow()
 
+    tol_times = 0
+
     try:
-        conn = sqlite3.connect("/Users/soso/python-projects/time-manage/hours.sqlite3")
+        conn = sqlite3.connect("/Users/soso/python-projects/time-manage/sport.sqlite3")
         cur = conn.cursor()
         cur.execute(
-            "SELECT * FROM hours WHERE DATE BETWEEN ? AND ?",
+            "SELECT HOURS FROM sport WHERE DATE BETWEEN ? AND ?",
             (f"{start:%Y-%m-%d}", f"{end:%Y-%m-%d}"),
         )
         rows = cur.fetchall()
         for row in rows:
-            print(row)
+            tol_times += row[0]
+            # print(row)
+
+        print(
+            f"Total Sport Times is {tol_times} hours in the last {int(duration) + 1} days.\nAverage Time is {tol_times / (int(duration) + 1)} hours."
+        )
 
     except sqlite3.Error as error:
         print(error)
