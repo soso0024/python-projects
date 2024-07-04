@@ -138,8 +138,8 @@ def commitHours(creds, part):
 
 def addEvent(creds, duration, description):
     start = datetime.datetime.utcnow()
-
     end = datetime.datetime.utcnow() + datetime.timedelta(hours=int(duration))
+
     start_formatted = start.isoformat() + "Z"
     end_formatted = end.isoformat() + "Z"
 
@@ -168,13 +168,22 @@ def addEvent(creds, duration, description):
 
 
 def getHours(duration):
-    start = datetime.datetime.utcnow()
-    end = datetime.datetime.utcnow() - datetime.timedelta(hours=int(duration))
+    start = datetime.datetime.utcnow() - datetime.timedelta(days=int(duration))
+    end = datetime.datetime.utcnow()
+    # print(start, end)
+
+    # start_formatted = start.isoformat() + "Z"
+    # end_formatted = end.isoformat() + "Z"
+
+    # print(start_formatted, end_formatted)
 
     try:
         conn = sqlite3.connect("/Users/soso/python-projects/time-manage/hours.sqlite3")
         cur = conn.cursor()
-        cur.execute("SELECT * FROM hours")
+        cur.execute(
+            "SELECT * FROM hours WHERE DATE BETWEEN ? AND ?",
+            (f"{start:%Y-%m-%d}", f"{end:%Y-%m-%d}"),
+        )
         rows = cur.fetchall()
         for row in rows:
             print(row)
