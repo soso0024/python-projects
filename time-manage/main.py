@@ -45,20 +45,27 @@ def main():
 
     # determine which function to run
     if len(sys.argv) <= 1:
-        print("Bad Request\nYou should provide a arguments like 'add' or 'commit'")
+        print(
+            "Bad Request\nYou should provide a arguments like 'add' or 'commit', 'get'."
+        )
         exit()
 
     if sys.argv[1] == "add":
         if len(sys.argv) <= 3:
-            print("You should provide duration and a title of plan")
+            print(
+                "You should provide id_type (general or sport) and duration, a title of plan."
+            )
             exit()
-        duration = sys.argv[2]
-        title = sys.argv[3]
-        addEvent(creds, duration, title)
+        id_type = sys.argv[2]
+        duration = sys.argv[3]
+        title = sys.argv[4]
+        addEvent(creds, id_type, duration, title)
 
     if sys.argv[1] == "commit":
-        if len(sys.argv) <= 1:
-            print("You should provide day")
+        if len(sys.argv) <= 3:
+            print(
+                "You should provide day (today is 0) and the kind of part you did training."
+            )
             exit()
         day = sys.argv[2]
         kind = sys.argv[3]
@@ -125,7 +132,7 @@ def commitHours(creds, day, kind):
             total_duration += duration
             print(f"{start}, {event['summary']}, duration: {duration}")
 
-            event_type = "GYM"
+            event_type = "Some Activity"
             kind = None
             if event["summary"].upper() == "GYM":
                 event_type = "GYM"
@@ -177,7 +184,7 @@ def commitHours(creds, day, kind):
         print(f"An error occurred: {error}")
 
 
-def addEvent(creds, duration, description):
+def addEvent(creds, id_type, duration, description):
     start = datetime.datetime.utcnow()
     end = datetime.datetime.utcnow() + datetime.timedelta(hours=int(duration))
 
@@ -197,10 +204,16 @@ def addEvent(creds, duration, description):
     }
 
     service = build("calendar", "v3", credentials=creds)
+
+    if id_type.upper() == "GENERAL":
+        id_type = "GENERAL_ID"
+    if id_type.upper() == "SPORT":
+        id_type = "SPORT_ID"
+
     event = (
         service.events()
         .insert(
-            calendarId=os.getenv("SPORT_ID"),
+            calendarId=os.getenv(id_type),
             body=event,
         )
         .execute()
