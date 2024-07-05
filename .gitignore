@@ -1,5 +1,5 @@
 .DS_Store
 time-manage/.env
 time-manage/credentials.json
-time-manage/hours.sqlite3
+time-manage/sport.sqlite3
 time-manage/token.json
