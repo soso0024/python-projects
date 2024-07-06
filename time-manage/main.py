@@ -53,13 +53,14 @@ def main():
     if sys.argv[1] == "add":
         if len(sys.argv) <= 3:
             print(
-                "You should provide id_type (general or sport) and duration, a title of plan."
+                "You should provide id_type (general or sport) and duration, a title of plan, hours ago ('+' value: past, '-' value: future)."
             )
             exit()
         id_type = sys.argv[2]
         duration = sys.argv[3]
         title = sys.argv[4]
-        addEvent(creds, id_type, duration, title)
+        hours_ago = sys.argv[5]
+        addEvent(creds, id_type, duration, title, hours_ago)
 
     if sys.argv[1] == "commit":
         if len(sys.argv) <= 3:
@@ -184,9 +185,9 @@ def commitHours(creds, day, kind):
         print(f"An error occurred: {error}")
 
 
-def addEvent(creds, id_type, duration, description):
-    start = datetime.datetime.utcnow()
-    end = datetime.datetime.utcnow() + datetime.timedelta(hours=int(duration))
+def addEvent(creds, id_type, duration, description, hours_ago=0):
+    start = datetime.datetime.utcnow() - datetime.timedelta(hours=int(hours_ago))
+    end = start + datetime.timedelta(hours=int(duration))
 
     start_formatted = start.isoformat() + "Z"
     end_formatted = end.isoformat() + "Z"
