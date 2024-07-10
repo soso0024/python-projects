@@ -3,3 +3,4 @@ time-manage/.env
 time-manage/credentials.json
 time-manage/sport.sqlite3
 time-manage/token.json
+.idea/
