@@ -122,7 +122,7 @@ def commit_hours(args):
                 )
             )
 
-        print(f"Total sport time: {total_duration}")
+        print(f"Total sport time: {total_duration}\n")
 
         try:
             conn = sqlite3.connect(
@@ -132,7 +132,7 @@ def commit_hours(args):
             print("Opened database successfully")
 
             for sport_data in event_data:
-                date, event_type, formatted_total_duration = sport_data
+                date, event_type, hours = sport_data
 
                 cur.execute(
                     "SELECT * FROM Sport WHERE DATE = ? AND CATEGORY = ?",
@@ -152,6 +152,34 @@ def commit_hours(args):
 
     except HttpError as error:
         print(f"An error occurred: {error}")
+
+
+def delete_entry(args):
+    try:
+        conn = sqlite3.connect("/Users/soso/python-projects/time-manage/sport.sqlite3")
+        cur = conn.cursor()
+        print("Connected to database")
+
+        if args.category:
+            cur.execute(
+                "DELETE FROM Sport WHERE DATE = ? AND CATEGORY = ?",
+                (args.date, args.category),
+            )
+            print(f"Deleting entry for {args.date} and category {args.category}...")
+        else:
+            cur.execute("DELETE FROM Sport WHERE DATE = ?", (args.date,))
+            print(f"Deleting all entries for {args.date}...")
+
+        conn.commit()
+        print("Entries successfully deleted")
+
+    except sqlite3.Error as error:
+        print(f"An error occurred: {error}")
+
+    finally:
+        if conn:
+            conn.close()
+            print("Database connection closed")
 
 
 def get_hours(args):
@@ -250,6 +278,18 @@ def main():
         help="Days ago (0 for today)",
     )
     commit_parser.set_defaults(func=commit_hours)
+
+    # Delete SQLite information parser
+    delete_parser = subparsers.add_parser("delete", help="Delete information in DB")
+    delete_parser.add_argument(
+        "date",
+        help="Wanted date which will be deleted (YYYY-MM-DD)",
+    )
+    delete_parser.add_argument(
+        "--category",
+        help="Wanted category (option)",
+    )
+    delete_parser.set_defaults(func=delete_entry)
 
     # Get hours parser
     get_parser = subparsers.add_parser("get", help="Get total hours for a duration")
