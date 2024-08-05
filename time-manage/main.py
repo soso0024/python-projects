@@ -1,7 +1,5 @@
 import datetime
 import os.path
-
-# import sys
 import argparse
 from dotenv import load_dotenv
 import sqlite3
@@ -11,7 +9,9 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-import pytz
+
+# import sys
+# import pytz
 
 # Load environment variables from the .env file
 load_dotenv()
