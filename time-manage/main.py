@@ -49,11 +49,11 @@ def add_event(args):
         "summary": args.title,
         "start": {
             "dateTime": start_formatted,
-            "timeZone": "Europe/Paris",
+            "timeZone": "Asia/Tokyo",
         },
         "end": {
             "dateTime": end_formatted,
-            "timeZone": "Europe/Paris",
+            "timeZone": "Asia/Tokyo",
         },
     }
 
@@ -83,7 +83,7 @@ def commit_hours(args):
                 timeMax=timeEnd,
                 singleEvents=True,
                 orderBy="startTime",
-                timeZone="Europe/Paris",
+                timeZone="Asia/Tokyo",
             )
             .execute()
         )
@@ -109,19 +109,16 @@ def commit_hours(args):
             print(f"{start}, {event['summary']}, duration: {duration}")
 
             event_type = "Some Activity"
-            kind = None
             if event["summary"].upper() == "GYM":
                 event_type = "GYM"
             if event["summary"].upper() in ["BASKET", "BASKETBALL"]:
                 event_type = "BASKETBALL"
-                kind = "Club"
 
             event_data.append(
                 (
                     start_formatted.date(),
                     event_type,
                     duration.total_seconds() / 3600,
-                    kind,
                 )
             )
 
@@ -135,7 +132,7 @@ def commit_hours(args):
             print("Opened database successfully")
 
             for sport_data in event_data:
-                date, event_type, formatted_total_duration, kind = sport_data
+                date, event_type, formatted_total_duration = sport_data
 
                 cur.execute(
                     "SELECT * FROM Sport WHERE DATE = ? AND CATEGORY = ?",
@@ -144,7 +141,7 @@ def commit_hours(args):
                 existing_row = cur.fetchone()
 
                 if existing_row is None:
-                    cur.execute("INSERT INTO Sport VALUES(?, ?, ?, ?);", sport_data)
+                    cur.execute("INSERT INTO Sport VALUES(?, ?, ?);", sport_data)
                     conn.commit()
                     print("Sport Information added to database successfully")
                 else:
@@ -251,10 +248,6 @@ def main():
         "day",
         type=int,
         help="Days ago (0 for today)",
-    )
-    commit_parser.add_argument(
-        "kind",
-        help="Kind of training",
     )
     commit_parser.set_defaults(func=commit_hours)
 

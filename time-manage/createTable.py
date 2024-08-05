@@ -10,7 +10,6 @@ conn.execute(
         (DATE       DATE    NOT NULL,
         CATEGORY    TEXT    NOT NULL,
         HOURS       INT     NOT NULL,
-        KIND        TEXT            ,
         UNIQUE(DATE, CATEGORY));"""
 )
 print("Table created successfully")
